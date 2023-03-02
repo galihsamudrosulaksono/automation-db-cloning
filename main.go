@@ -97,9 +97,9 @@ func main() {
 		var session_id *string
 		var deviceid *string
 		var absensi_sid *string
-		var perpus_sid *string
-		var temp1 *string
-		var temp2 *string
+		// var perpus_sid *string
+		// var temp1 *string
+		// var temp2 *string
 		var google_id *string
 		var google_email *string
 		var google_name *string
@@ -142,9 +142,9 @@ func main() {
 			&session_id,
 			&deviceid,
 			&absensi_sid,
-			&perpus_sid,
-			&temp1,
-			&temp2,
+			// &perpus_sid,
+			// &temp1,
+			// &temp2,
 			&google_id,
 			&google_email, &google_name, &google_picture, &google_modified, &setting_presensi_ip, &setting_presensi_qrcode, &setting_presensi_radius, &setting_presensi_foto, &verification, &verification_modified, &verificator)
 		if err != nil {
