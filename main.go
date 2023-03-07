@@ -7,7 +7,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
@@ -43,6 +42,13 @@ type User struct {
 	Role     string `db:"role"`
 }
 
+// create user phone
+type UserPhone struct {
+	ID     int `db:"id"`
+	UserID int `db:"id_user"`
+	Phone  int `db:"nowa"`
+}
+
 func dsn(dbName string) string {
 	return fmt.Sprintf("%s:%s@tcp(%s)/%s", username, password, hostname, dbName)
 }
@@ -59,10 +65,11 @@ func main() {
 	defer cancelfunc()
 
 	// //get users
-	usersV2 := []User{}
+	// usersV2 := []User{}
+	usersPhonesV2 := []UserPhone{}
 
 	// just get user that not a student
-	rows, err := db.QueryContext(ctx, "SELECT * FROM data_user WHERE role != 'siswa' ORDER BY id ASC")
+	rows, err := db.QueryContext(ctx, "SELECT id, id_user, nowa FROM bukutamu_nowas ORDER BY id ASC")
 	if err != nil {
 		log.Printf("Error %s when getting users", err)
 		return
@@ -71,97 +78,34 @@ func main() {
 
 	for rows.Next() {
 		var id int
-		var email *string
-		var username *string
-		var password *string
-		var passcode *string
-		var username_new *string
-		var password_new *string
-		var modified_date_userpass *time.Time
-		var approve_user *int
-		var username_ori *string
-		var password_ori *string
-		var expire *[]uint8
-		var avatar *string
-		var alias *string
-		var nama *string
-		var gender *string
-		var tentang *string
-		var role *string
-		var upd_email_time *int
-		var upd_email_new *string
-		var upd_email_code *string
-		var xdat *string
-		var login_last *[]uint8
-		var modified *[]uint8
-		var modified_id *int
-		var session_id *string
-		var deviceid *string
-		var absensi_sid *string
-		var perpus_sid *string
-		// var temp1 *string
-		// var temp2 *string
-		var google_id *string
-		var google_email *string
-		var google_name *string
-		var google_picture *string
-		var google_modified *[]uint8
-		var setting_presensi_ip *int
-		var setting_presensi_qrcode *int
-		var setting_presensi_radius *int
-		var setting_presensi_foto *int
-		var verification *int
-		var verification_modified *[]uint8
-		var verificator *int
+		var id_user int
+		var nowa *int
 
 		//
 		err = rows.Scan(&id,
-			&email,
-			&username,
-			&password,
-			&passcode,
-			&username_new,
-			&password_new,
-			&modified_date_userpass,
-			&approve_user,
-			&username_ori,
-			&password_ori,
-			&expire,
-			&avatar,
-			&alias,
-			&nama,
-			&gender,
-			&tentang,
-			&role,
-			&upd_email_time,
-			&upd_email_new,
-			&upd_email_code,
-			&xdat,
-			&login_last,
-			&modified,
-			&modified_id,
-			&session_id,
-			&deviceid,
-			&absensi_sid,
-			&perpus_sid,
-			// &temp1,
-			// &temp2,
-			&google_id,
-			&google_email, &google_name, &google_picture, &google_modified, &setting_presensi_ip, &setting_presensi_qrcode, &setting_presensi_radius, &setting_presensi_foto, &verification, &verification_modified, &verificator)
+			&id_user,
+			&nowa)
 		if err != nil {
 			log.Printf("Error %s when scanning users", err)
 			return
 		}
-		//append to users
-		usersV2 = append(usersV2, User{
-			ID:       id,
-			Name:     *nama,
-			Password: *password,
-			Username: *username,
-			Role:     *role,
+		// //append to users
+		// usersV2 = append(usersV2, User{
+		// 	ID:       id,
+		// 	Name:     *nama,
+		// 	Password: *password,
+		// 	Username: *username,
+		// 	Role:     *role,
+		// })
+		// append to users phone
+		usersPhonesV2 = append(usersPhonesV2, UserPhone{
+			ID:     id,
+			UserID: id_user,
+			Phone:  *nowa,
 		})
+
 	}
-	fmt.Println(usersV2, " user : ", len(usersV2))
+	fmt.Println(usersPhonesV2, " user : ", len(usersPhonesV2))
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -181,40 +125,13 @@ func main() {
 	}
 
 	//insert usersv2 to postgresql
-	for _, user := range usersV2 {
-		//generate uuid for user
-		newId, err := uuid.NewUUID()
+	for _, userPhone := range usersPhonesV2 {
+		fmt.Println(userPhone.UserID, " ", userPhone.Phone, "di update")
+		//update users phone
+		_, err = dbp.Exec("UPDATE users SET phone = $1 WHERE id_v2 = $2", userPhone.Phone, userPhone.UserID)
 		if err != nil {
-			log.Printf("Error %s when generating uuid", err)
+			log.Printf("Error %s when updating users phone", err)
 			return
-		}
-
-		//role
-		if user.Role == "sdm" {
-			user.Role = "teacher"
-		} else if user.Role == "siswa" {
-			user.Role = "student"
-		}
-
-		//generate email from username
-		email := user.Username + "@afresto.com"
-
-		//check if username already exist in postgresql dont insert
-		var count int
-		err = dbp.QueryRow("SELECT COUNT(id) FROM users WHERE username = $1", user.Username).Scan(&count)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		// print count
-		fmt.Println(count, " count : ", user.Username)
-		if count == 0 {
-			// print count
-			fmt.Println(user.Username + " dibuat")
-			//insert to postgresql
-			_, err = dbp.Exec("INSERT INTO users (id, name, password, username, email, role, id_v2, created_at, updated_at, avatar) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", newId, user.Name, user.Password, user.Username, email, user.Role, user.ID, time.Now(), time.Now(), "testapp/user-avatar/1.png")
-			if err != nil {
-				log.Fatalln(err)
-			}
 		}
 	}
 
