@@ -20,7 +20,7 @@ const (
 	username = "root"
 	password = ""
 	hostname = "127.0.0.1"
-	dbname   = "sditqan"
+	dbname   = "smk7"
 )
 
 type PostgresConfig struct {
@@ -48,7 +48,7 @@ func dsn(dbName string) string {
 }
 
 func main() {
-	db, err := sql.Open("mysql", dsn("sditqan"))
+	db, err := sql.Open("mysql", dsn("smk7"))
 	if err != nil {
 		log.Printf("Error %s when opening DB\n", err)
 		return
@@ -61,7 +61,8 @@ func main() {
 	// //get users
 	usersV2 := []User{}
 
-	rows, err := db.QueryContext(ctx, "SELECT * FROM data_user ORDER BY id ASC")
+	// just get user that not a student
+	rows, err := db.QueryContext(ctx, "SELECT * FROM data_user WHERE role != 'siswa' ORDER BY id ASC")
 	if err != nil {
 		log.Printf("Error %s when getting users", err)
 		return
@@ -97,7 +98,7 @@ func main() {
 		var session_id *string
 		var deviceid *string
 		var absensi_sid *string
-		// var perpus_sid *string
+		var perpus_sid *string
 		// var temp1 *string
 		// var temp2 *string
 		var google_id *string
@@ -142,7 +143,7 @@ func main() {
 			&session_id,
 			&deviceid,
 			&absensi_sid,
-			// &perpus_sid,
+			&perpus_sid,
 			// &temp1,
 			// &temp2,
 			&google_id,
@@ -166,7 +167,7 @@ func main() {
 
 	// postgresql
 
-	dataSourceName := fmt.Sprintf("host=db-postgresql-do-user-12344224-0.b.db.ondigitalocean.com port=25060 user=doadmin dbname=itqan-sim-db sslmode=require sslrootcert=config/ca-certificate.crt password=AVNS_FaGscLRzgGbXRuffZRf")
+	dataSourceName := fmt.Sprintf("host=db-postgresql-do-user-12344224-0.b.db.ondigitalocean.com port=25060 user=doadmin dbname=letter-sim-db-smkn7smg sslmode=require sslrootcert=config/ca-certificate.crt password=AVNS_FaGscLRzgGbXRuffZRf")
 
 	dbp, err := sqlx.Connect("postgres", dataSourceName)
 	if err != nil {
@@ -210,7 +211,7 @@ func main() {
 			// print count
 			fmt.Println(user.Username + " dibuat")
 			//insert to postgresql
-			_, err = dbp.Exec("INSERT INTO users (id, name, password, username, email, role, id_v2, created_at, updated_at, avatar) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", newId, user.Name, user.Password, user.Username, email, user.Role, user.ID, time.Now(), time.Now(), "user-avatar/5.png")
+			_, err = dbp.Exec("INSERT INTO users (id, name, password, username, email, role, id_v2, created_at, updated_at, avatar) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", newId, user.Name, user.Password, user.Username, email, user.Role, user.ID, time.Now(), time.Now(), "testapp/user-avatar/1.png")
 			if err != nil {
 				log.Fatalln(err)
 			}
